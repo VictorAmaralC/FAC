@@ -1,0 +1,158 @@
+.data
+	invalidas: .asciiz "Entradas invalidas."
+	impossivel: .asciiz "Nao foi possivel calcular a sqrt("
+	deX: .asciiz ")."
+	Raiz: .asciiz "A raiz quadrada de "
+	eh: .asciiz " eh "
+	calculada: .asciiz ", calculada em "
+	interacoes: .asciiz " iteracoes."
+	nline: .asciiz "\n"
+	OneFloat: .double 1.0
+	TwoFloat: .double 2.0
+	Limite: .double 101.0
+	parada: .double 10.0
+.text
+	# f0 = armazena as leituras do usu�rio nas chamadas do sistema
+	# f12 = usado para imprimir doubles/floats
+	# f2 = X, f4 = E vari�veis
+	# f6 = 0, f8 = 1, f10 = 101, f14 = 10 auxiliares fixas
+	# f16 - 30 auxiliares livres
+	
+main:	# in�cio do programa
+	ldc1 $f8, OneFloat	# f8 = 1.0 em float
+	
+	li $v0, 5		# L� o primeiro inteiro => X de sqrt(X)
+	syscall
+	move $t0, $v0
+	mtc1.d $t0, $f2
+	cvt.d.w $f2, $f2
+	#add.d $f2, $f0, $f6 	# $f2 = primeiro inteiro
+	li $v0, 5		# L� o segundo inteiro => E de 1*10-(E)
+	syscall
+	move $t1, $v0
+	mtc1.d $t1, $f4
+	cvt.d.w $f4, $f4
+	#add.d $f4, $f0, $f6	# $f4 = segundo inteiro
+	
+	ldc1 $f16, TwoFloat	# Aux1 = 2 verifica��o das entradas
+	ldc1 $f18, OneFloat	# Aux2 = 1
+	
+	jal verifica_entradas
+	jal encontra_inteiros
+	jal calc_raiz	
+	
+li $v0, 10	# Fim do programa
+syscall
+
+verifica_entradas:
+	c.lt.d $f2, $f16	# se X < 2 -> c1 = true else false
+	bc1t imprime_erro1	# se t5 != 0, encaminha para a fun��o false
+	c.lt.d $f4, $f18	# se E < 1 -> c1 = true else false
+	bc1t imprime_erro1	# se t5 != 0, encaminha para a fun��o false
+	jr $ra
+
+imprime_erro1: 
+	li $v0, 4		
+	la $a0, invalidas 	# Imprime o erro de sa�das inv�lidas
+	syscall
+	li $v0, 4
+	la $a0, nline
+	syscall
+	li $v0, 10	# Fim do programa
+	syscall
+
+encontra_inteiros:
+	ldc1 $f18, OneFloat	#f4 Aux1 = 1  para fun��o encontra inteiros
+	add.d $f16, $f6, $f6	#f5 Aux2 = 2 para encontrar B0
+loop1:
+	add.d $f18, $f18, $f8	# Aux1 ++
+	mul.d $f16, $f18, $f18	# Aux2 = Aux1 ^ 2
+	c.le.d $f2, $f16	# Caso b0 >= X, c1 = true, se n�o false
+	bc1t encontrado		# Caso c1 = true, entrada b0 encontrada
+		
+	j loop1
+encontrado:	# Define os limites da opera��o sqrt
+	sub.d $f16, $f18, $f8	# Define f4 = f16 = A0
+	div.d $f18, $f2, $f16	# f5 = f18 = B1 = X/a1
+	jr $ra
+	
+calc_raiz:
+	add.d $f24, $f6, $f8	# Aux 3 para contar o numero de intera��es f7 = f24 = 1
+	addi $t2, $t2, 1
+	add.d $f26, $f8, $f8	# Aux 4 f8 = f26 = 2
+	ldc1 $f10, Limite	# Aux 5 f9 = f10 = 101, limite de intera��es
+	ldc1 $f20, OneFloat	# Aux Criterio de parada f11 = f20 = 1
+	ldc1 $f14, parada	# Aux parada f13 = f14 = 10
+calc_Cparada:
+	div.d $f20, $f20, $f14	# 1*10^(-aux)
+	add.d $f22, $f22, $f8	# aux ++
+	c.eq.d $f22, $f4	# Aux = E stop
+	bc1t loop2		# Sai do loop
+	j calc_Cparada
+loop2:	
+	add.d $f24, $f24, $f8 	# Aux++
+	addi $t2, $t2, 1
+	add.d $f16, $f16, $f18	# An+1 = An + Bn
+	div.d $f16, $f16, $f26	# An+1 = (An + Bn)/2
+	div.d $f18, $f2, $f16	# Bn+1 = X/an+1
+	
+	sub.d $f28, $f18, $f16	# Bn - An
+	abs.d $f28, $f28	# f10 = f28 = valor absoluto de (Bn-An)
+	
+	c.lt.d $f28, $f20	# verifica se a precis�o foi alcan�ada
+	bc1t exit		# sai do loop
+	c.eq.d $f24, $f10	# verifica o se foi feito o numero de intera��es solicitadas
+	bc1t imprime_erro2	# sai do loop 
+
+	j loop2
+exit:	
+	li $v0, 4		
+	la $a0, Raiz	
+	syscall
+	
+	move $a0, $t0
+	li $v0, 1
+	syscall
+	
+	li $v0, 4
+	la $a0, eh
+	syscall
+	
+	add.d $f12, $f6, $f18
+	li $v0, 3
+	syscall
+	
+	li $v0, 4
+	la $a0, calculada
+	syscall
+	
+	move $a0, $t2
+	li $v0, 1
+	syscall
+	
+	li $v0, 4
+	la $a0, interacoes
+	syscall
+	
+	li $v0, 4
+	la $a0, nline
+	syscall
+	jr $ra
+	
+imprime_erro2:
+	li $v0, 4		
+	la $a0, impossivel
+	syscall
+	
+	#add.d $f12, $f6, $f2
+	move $a0, $t0
+	li $v0, 1
+	syscall
+	li $v0, 4
+	la $a0, deX
+	syscall
+	li $v0, 4
+	la $a0, nline
+	syscall
+	li $v0, 10	# Fim do programa
+	syscall
