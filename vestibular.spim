@@ -1,0 +1,71 @@
+.data
+	novaLinha: .asciiz "\n"
+	vestibular: .space 10001
+	resposta: .space 10001
+.text
+	# Index
+	# t0 = numero de questoes
+	# t1 = Acertos
+	# t2 = aux para percorrer vetor de comparacao
+	# t3 = str vestibular
+	# t4 = str resposta
+	main:
+		# Le o numero de questoes do vestibular
+		li $v0, 5
+		syscall
+		
+		move $t0, $v0
+		
+		# Le a primeira string
+		li $v0, 8
+    		la $a0, vestibular
+    		li $a1, 10000
+    		syscall
+    		
+    		# le a segunda string
+    		li $v0, 8
+    		la $a0, resposta
+    		li $a1, 10000
+    		syscall
+    		
+    		addi $t1, $zero, 0
+    		addi $t2, $zero, 0
+    		la $t3, vestibular
+    		la $t4, resposta
+    		
+    		j while
+		
+	while: 
+		bgt $t2, $t0, exit	# Encerra o programa ao verificar o vetor inteiro
+		
+		lb $t5, 0($t3)
+        	lb $t6, 0($t4)
+    		
+    		addi $t2, $t2, 1
+    		addi $t3, $t3, 1
+        	addi $t4, $t4, 1
+    		
+        	sub $t7, $t5, $t6	# Verifica igualdade, caso seja igual acertos++
+       	 	beq $t7, $zero, acerto
+		
+		j while		# Recursao
+		
+	acerto:
+		addi $t1, $t1, 1
+		j while
+		
+	exit:
+		# Imprime numero de acertos
+		subi $t1, $t1, 1
+		li $v0, 1
+		move $a0, $t1
+		syscall
+		
+		# Quebra de linha
+		li $v0, 4
+		la $a0, novaLinha
+		syscall
+		
+		# Fim do programa
+		li $v0, 10
+		syscall
