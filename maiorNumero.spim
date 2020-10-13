@@ -1,0 +1,57 @@
+.data
+	novaLinha: .asciiz "\n"
+
+.text
+# t0 = numero de casos
+# t1 = maior numero
+# t2 = numero lido
+main:
+	# Le o numero casos
+	li $v0, 5
+	syscall	
+	move $t0, $v0
+	
+	# Le o primeiro numero e define ele como maior
+	li $v0, 5
+	syscall
+	move $t1, $v0
+	
+	sub $t0, $t0, 1
+	
+	j while
+
+while:
+	beq $t0, $zero, exit 	# se numero de casos == 0, sair
+	
+	# Le T2 para comparação
+	li $v0, 5
+	syscall
+	move $t2, $v0
+	
+	# Atualiza o numero de casos
+	sub $t0, $t0, 1
+	
+	# Caso t2 > t1, define t1 == t2
+	bgt $t2, $t1, trocaMaior
+	
+	j while
+	
+trocaMaior:
+	addi $t1, $t2, 0
+	
+	j while
+	
+exit: 
+	# Imprime maior numero
+	li $v0, 1
+	move $a0, $t1
+	syscall
+		
+	# Quebra de linha
+	li $v0, 4
+	la $a0, novaLinha
+	syscall
+		
+	# Fim do programa
+	li $v0, 10
+	syscall

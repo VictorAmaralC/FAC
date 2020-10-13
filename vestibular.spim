@@ -56,7 +56,7 @@
 		
 	exit:
 		# Imprime numero de acertos
-		subi $t1, $t1, 1
+		sub $t1, $t1, 1
 		li $v0, 1
 		move $a0, $t1
 		syscall
